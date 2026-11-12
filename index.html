@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#090c15" />
+  <title>Gravebound — The Ashen Wilds</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main id="game-shell">
+    <canvas id="world" aria-label="Gravebound 3D game world"></canvas>
+    <div class="vignette"></div>
+    <header class="topbar">
+      <div class="brand"><div class="brand-mark">✦</div><div><div class="brand-name">GRAVEBOUND</div><div class="brand-sub">THE ASHEN WILDS</div></div></div>
+      <div class="quest-card"><div class="quest-kicker"><span class="quest-dot"></span> CURRENT QUEST</div><div class="quest-title" id="quest-title">The Quieting</div><div class="quest-desc" id="quest-desc">Awaken the three Soul Obelisks</div><div class="quest-progress"><div class="quest-progress-fill" id="quest-progress"></div></div><div class="quest-count" id="quest-count">0 / 3 AWAKENED</div></div>
+      <div class="top-actions"><button class="icon-btn" id="help-btn" aria-label="Controls">?</button><button class="icon-btn" id="sound-btn" aria-label="Sound">♫</button></div>
+    </header>
+    <section class="left-stack">
+      <div class="status-card"><div class="status-head"><span>VITALITY</span><span id="health-text">100 / 100</span></div><div class="bar"><div id="health-fill" class="bar-fill health-fill"></div></div><div class="status-head mana-head"><span>WRAITHFIRE</span><span id="mana-text">100 / 100</span></div><div class="bar mana-bar"><div id="mana-fill" class="bar-fill mana-fill"></div></div><div class="level-line"><span class="level-badge" id="level-badge">01</span><div class="xp-wrap"><div class="xp-label"><span>SOUL SHARDS</span><span id="xp-label">0 / 80</span></div><div class="xp-track"><div id="xp-fill"></div></div></div></div></div>
+      <div class="compass-card"><div class="compass-ring"><span class="compass-n">N</span><span class="compass-east">E</span><span class="compass-s">S</span><span class="compass-west">W</span><span class="compass-needle" id="compass-needle"></span><span class="compass-center">✦</span></div><div class="compass-label">ASHEN WILDS <span id="zone-label">· THE OLD ROAD</span></div></div>
+    </section>
+    <section class="right-stack"><div class="map-frame"><div class="map-label">FIELD MAP <span>✦</span></div><canvas id="minimap" width="150" height="150"></canvas><div class="map-coords" id="map-coords">N 04 · E 12</div></div><div class="soul-counter"><span class="soul-gem">◆</span><span id="soul-count">0</span><span class="soul-label">SOULS</span></div></section>
+    <div id="toast" class="toast"></div>
+    <div id="interact-prompt" class="interact-prompt"><span class="keycap">F</span><span id="interact-text">AWAKEN OBELISK</span></div>
+    <div class="ability-bar">
+      <div class="ability-slot primary-slot"><div class="ability-icon" id="attack-icon"><span>☄</span></div><div class="ability-info"><span class="ability-name">SOUL BOLT</span><span class="ability-key">LMB <i>·</i> FREE</span></div><span class="slot-key">I</span></div>
+      <div class="ability-slot"><div class="ability-icon summon-icon"><span>♙</span><span class="cooldown" id="summon-cooldown"></span></div><div class="ability-info"><span class="ability-name">BONE SERVANT</span><span class="ability-key">Q <i>·</i> 35 MANA</span></div><span class="slot-key">II</span></div>
+      <div class="ability-slot"><div class="ability-icon nova-icon"><span>✧</span><span class="cooldown" id="nova-cooldown"></span></div><div class="ability-info"><span class="ability-name">GRAVE NOVA</span><span class="ability-key">E <i>·</i> 55 MANA</span></div><span class="slot-key">III</span></div>
+      <div class="ability-slot"><div class="ability-icon dash-icon"><span>➤</span></div><div class="ability-info"><span class="ability-name">WRAITH STEP</span><span class="ability-key">SPACE <i>·</i> SHIFT</span></div><span class="slot-key">IV</span></div>
+    </div>
+    <div class="bottom-hint" id="bottom-hint"><span class="hint-dot"></span> The dead are restless. Find the obelisks.</div>
+    <div class="mobile-controls" id="mobile-controls"><div class="stick-zone" id="stick-zone"><div class="stick-base"><div class="stick-knob" id="stick-knob"></div></div></div><div class="mobile-buttons"><button id="mobile-attack">☄</button><button id="mobile-summon">♙</button><button id="mobile-nova">✧</button><button id="mobile-interact">F</button></div></div>
+    <div class="modal-backdrop" id="intro-modal"><div class="intro-panel"><div class="intro-symbol">☽</div><div class="eyebrow">A DARK FANTASY ADVENTURE</div><h1>THE ASHEN<br><em>WILDS</em></h1><p class="intro-copy">The old kingdom has fallen silent. Its dead have not.<br>Bind the lost souls. Wake the obelisks. End the quiet.</p><div class="intro-rule"></div><div class="intro-controls"><div><kbd>W A S D</kbd><span>MOVE</span></div><div><kbd>MOUSE</kbd><span>AIM & ATTACK</span></div><div><kbd>Q / E</kbd><span>NECROMANCY</span></div><div><kbd>F</kbd><span>INTERACT</span></div></div><button id="start-btn" class="start-btn">ENTER THE WILDS <span>→</span></button><div class="intro-foot">A lone necromancer · 3 soul obelisks · 1 forgotten curse</div></div></div>
+    <div class="modal-backdrop hidden" id="help-modal"><div class="help-panel"><button class="close-modal" id="close-help">×</button><div class="eyebrow">FIELD NOTES</div><h2>Survive the Wilds</h2><div class="help-row"><kbd>W A S D</kbd><span>Move through the world</span></div><div class="help-row"><kbd>MOUSE</kbd><span>Aim; click to fire a Soul Bolt</span></div><div class="help-row"><kbd>Q</kbd><span>Summon a Bone Servant (35 mana)</span></div><div class="help-row"><kbd>E</kbd><span>Unleash Grave Nova (55 mana)</span></div><div class="help-row"><kbd>SPACE</kbd><span>Wraith Step — dash through danger</span></div><div class="help-row"><kbd>F</kbd><span>Awaken a nearby Soul Obelisk</span></div><p class="help-note">Defeat the restless dead to gather soul shards and grow stronger. Mana slowly returns over time. Your Bone Servants fight beside you.</p><button class="start-btn" id="resume-btn">BACK TO THE WILDS</button></div></div>
+    <div class="modal-backdrop hidden" id="end-modal"><div class="intro-panel end-panel"><div class="intro-symbol">✦</div><div class="eyebrow">THE CURSE IS BROKEN</div><h1 id="end-title">DAWN<br><em>RETURNS</em></h1><p class="intro-copy" id="end-copy">The souls of Ashenmoor are free.<br>The old road is quiet at last.</p><div class="intro-rule"></div><div class="end-stats" id="end-stats"></div><button id="restart-btn" class="start-btn">WALK THE WILDS AGAIN <span>↻</span></button></div></div>
+    <div id="damage-flash"></div>
+  </main>
+  <script type="module" src="game.js"></script>
+</body>
+</html>
