@@ -21,7 +21,7 @@ const M = {
   soil: material('#3d453a'), grass: material('#4c5741'), grass2: material('#364339'), moss: material('#727351'),
   stone: material('#77776b'), stone2: material('#4b504d'), pale: material('#a49b83'), bark: material('#433d31'),
   leaves: material('#34473c'), leaves2: material('#51573f'), robe: material('#202833'), robe2: material('#121820'),
-  leather: material('#594834'), bone: material('#d1c9b5'), dead: material('#647164'), dead2: material('#343f3b'),
+  leather: material('#594834'), skin: material('#c49a78'), hair: material('#302923'), cloth: material('#59616a'), metal: material('#9b8866',.48), eye: material('#e3d6c1',.35), bone: material('#d1c9b5'), dead: material('#647164'), dead2: material('#343f3b'),
   cyan: material('#91e4e0',.25,{emissive:'#35bcc7',emissiveIntensity:2.2}),
   violet: material('#d1a5ef',.25,{emissive:'#904bd6',emissiveIntensity:2.3}),
   fire: material('#ffc180',.25,{emissive:'#dd6335',emissiveIntensity:2}),
@@ -68,20 +68,64 @@ function createObelisk(x,z,index){const g=new THREE.Group();world.add(g);g.posit
  const light=new THREE.PointLight('#a867e7',.3,9);light.position.set(0,2.6,0);g.add(light);
  obelisks.push({group:g, pos:v3(x,0,z),index,awakened:false,rune,ring,light});
 }
+function humanoidLimb(parent,x,y,z,radius,length,material,lean=0){
+ const pivot=new THREE.Group();pivot.position.set(x,y,z);parent.add(pivot);pivot.rotation.z=lean;
+ const upper=mesh(new THREE.CapsuleGeometry(radius,length,3,7),material,pivot,0,-length*.48,0);
+ const joint=ball(radius*.88,material,pivot,0,-length,0,8);
+ return {pivot,upper,joint};
+}
+function makeHuman(g,options={}){
+ const hostile=!!options.hostile,skin=options.skin|| (hostile?M.dead:M.skin),outfit=options.outfit||(hostile?M.dead2:M.robe),accent=options.accent||(hostile?M.dead:M.leather);
+ // Human silhouette: separate hips, chest, shoulders, articulated limbs, neck and an uncovered face.
+ ball(.29,outfit,g,0,.91,0,10).scale.set(1.05,.72,.82);
+ const chest=ball(.34,outfit,g,0,1.32,0,10);chest.scale.set(1,.95,.76);
+ const armor=mesh(new THREE.BoxGeometry(.37,.28,.045),accent,g,0,1.42,.255);armor.rotation.z=-.08;
+ cylinder(.34,.34,.11,M.leather,g,0,1.02,0,10);
+ box(.105,.12,.06,M.metal,g,0,1.02,.31);
+ // Legs and boots remain clearly separated in silhouette.
+ const legs=[];
+ for(const side of [-1,1]){
+  const leg=humanoidLimb(g,side*.17,.78,0,.115,.38,hostile?M.dead2:M.cloth,-side*.035);legs.push(leg);
+  const shin=mesh(new THREE.CapsuleGeometry(.085,.31,3,7),hostile?M.dead:M.leather,g,side*.17,.28,.015);shin.rotation.z=-side*.025;
+  const boot=mesh(new THREE.BoxGeometry(.19,.16,.3),M.leather,g,side*.17,.105,.075);boot.rotation.x=-.06;
+ }
+ // Sleeves, cuffs and hands form a natural arm pose rather than a single blocky cylinder.
+ const arms=[];
+ for(const side of [-1,1]){
+  ball(.17,outfit,g,side*.34,1.52,0,8);
+  const arm=humanoidLimb(g,side*.38,1.48,0,.105,.4,hostile?M.dead:M.robe,side*.17);arms.push(arm);
+  const fore=mesh(new THREE.CapsuleGeometry(.085,.28,3,7),hostile?M.dead:M.leather,g,side*.47,1.0,.07);fore.rotation.z=side*.2;
+  ball(.095,skin,g,side*.49,.82,.1,8);
+ }
+ cylinder(.105,.12,.2,skin,g,0,1.72,0,9);
+ ball(.235,skin,g,0,1.94,.015,12).scale.set(.9,1.05,.88);
+ // Hairline, ears, brow, eyes and nose keep the face readable at gameplay distance.
+ ball(.235,hostile?M.dead2:M.hair,g,0,2.055,-.015,10).scale.set(1,.55,.92);
+ for(const side of [-1,1]){
+  ball(.055,skin,g,side*.22,1.94,.015,8);
+  ball(.031,M.eye,g,side*.082,1.96,.205,8);
+  ball(.019,hostile?M.red:M.hair,g,side*.082,1.96,.229,7);
+  const brow=mesh(new THREE.BoxGeometry(.075,.022,.025),hostile?M.dead2:M.hair,g,side*.082,2.015,.205);brow.rotation.z=-side*.12;
+ }
+ const nose=mesh(new THREE.ConeGeometry(.045,.12,6),skin,g,0,1.91,.25);nose.rotation.x=Math.PI/2;
+ if(!hostile){
+  // A short mantle hangs behind the adventurer; the face stays open and human.
+  const cape=mesh(new THREE.ConeGeometry(.48,1.18,8),M.robe2,g,0,.91,-.17);cape.rotation.x=Math.PI;
+  box(.055,.48,.035,M.metal,g,-.22,1.43,.245).rotation.z=-.35;
+ }
+ return {arms,legs};
+}
 function createHero(){const g=new THREE.Group();world.add(g);g.position.copy(player.pos);player.mesh=g;
- const mantle=mesh(new THREE.ConeGeometry(.72,1.55,7),M.robe,g,0,1.12,0);mantle.rotation.x=Math.PI;
- const torso=mesh(new THREE.CylinderGeometry(.28,.52,.85,7),M.robe2,g,0,1.72,0);torso.rotation.x=.06;
- ball(.32,M.pale,g,0,2.34,0,9);const hood=mesh(new THREE.ConeGeometry(.43,.63,7),M.robe,g,0,2.61,.02);hood.rotation.x=.12;
- ball(.075,M.violet,g,-.13,2.35,.285,8);ball(.075,M.violet,g,.13,2.35,.285,8);
- const staff=new THREE.Group();staff.position.set(.56,1.1,.05);staff.rotation.z=-.16;g.add(staff);cylinder(.045,.065,1.85,M.bark,staff,0,.78,0,6);ball(.19,M.cyan,staff,0,1.78,0,10);player.staff=staff;
+ const body=makeHuman(g,{outfit:M.robe,accent:M.leather});player.limbs=body;
+ const shoulder=ball(.16,M.robe,g,.34,1.52,0,8);
+ const staff=new THREE.Group();staff.position.set(.55,.05,.02);staff.rotation.z=-.04;g.add(staff);cylinder(.045,.065,1.85,M.bark,staff,0,.93,0,7);ball(.19,M.cyan,staff,0,1.9,0,10);player.staff=staff;
  const aura=mesh(new THREE.TorusGeometry(.68,.025,6,24),M.violet,g,0,.08,0,false);aura.rotation.x=Math.PI/2;player.aura=aura;
  return g;}
 function createEnemy(x,z,type='wretch'){const g=new THREE.Group();world.add(g);g.position.set(x,0,z);
- const bossType=type==='king';const scale=bossType?1.8:type==='brute'?1.25:1;
- const body=mesh(new THREE.CylinderGeometry(.25*scale,.4*scale,1.25*scale,6),bossType?M.robe2:M.dead2,g,0,.9*scale,0);body.rotation.z=(random()-.5)*.16;
- const head=ball(.28*scale,bossType?M.robe:M.dead,g,0,1.72*scale,0,8);ball(.055*scale,M.red,g,-.11*scale,1.76*scale,.23*scale,8);ball(.055*scale,M.red,g,.11*scale,1.76*scale,.23*scale,8);
- for(const s of [-1,1]){const arm=mesh(new THREE.CylinderGeometry(.1,.14,.82*scale,5),M.dead,g,s*.39*scale,1.08*scale,0);arm.rotation.z=s*.35;const leg=mesh(new THREE.CylinderGeometry(.12,.17,.7*scale,5),M.dead2,g,s*.17*scale,.35*scale,0);leg.rotation.z=s*.1;}
- g.traverse(o=>{if(o.isMesh)o.castShadow=true;});const e={group:g,pos:g.position,hp:bossType?360:type==='brute'?90:52,maxHp:bossType?360:type==='brute'?90:52,speed:bossType?1.5:type==='brute'?1.15:1.75,damage:bossType?18:type==='brute'?13:9,attack:0,type,dead:false,phase:random()*6};enemies.push(e);if(bossType)boss=e;return e;}
+ const bossType=type==='king',scale=bossType?1.8:type==='brute'?1.25:1;
+ const outfit=bossType?M.robe2:type==='brute'?M.dead2:M.cloth;
+ const limbs=makeHuman(g,{hostile:true,outfit,skin:bossType?M.dead2:M.dead,accent:bossType?M.robe:M.dead2});g.scale.setScalar(scale);
+ g.traverse(o=>{if(o.isMesh)o.castShadow=true;});const e={group:g,pos:g.position,hp:bossType?360:type==='brute'?90:52,maxHp:bossType?360:type==='brute'?90:52,speed:bossType?1.5:type==='brute'?1.15:1.75,damage:bossType?18:type==='brute'?13:9,attack:0,type,dead:false,phase:random()*6,limbs};enemies.push(e);if(bossType)boss=e;return e;}
 function spawnEnemyNear(x,z,type){const a=random()*Math.PI*2,r=4+random()*4;return createEnemy(x+Math.cos(a)*r,z+Math.sin(a)*r,type);}
 function createServant(){const g=new THREE.Group();world.add(g);g.position.set(player.pos.x+(random()-.5)*2,0,player.pos.z+1);const body=mesh(new THREE.CylinderGeometry(.19,.28,.8,6),M.bone,g,0,.67,0);ball(.22,M.bone,g,0,1.2,0,8);ball(.045,M.cyan,g,-.09,1.22,.19);ball(.045,M.cyan,g,.09,1.22,.19);for(const s of [-1,1]){mesh(new THREE.CylinderGeometry(.07,.1,.58,5),M.bone,g,s*.27,.66,0).rotation.z=s*.3;}const a=mesh(new THREE.TorusGeometry(.38,.025,5,20),M.cyan,g,0,.06,0,false);a.rotation.x=Math.PI/2;const servant={group:g,attack:0,life:38,phase:random()*6};player.servants.push(servant);return servant;}
 function makeProjectile(from,to,owner='player',damage=20){const dir=to.clone().sub(from);if(dir.length()<.1)dir.set(0,0,-1);dir.normalize();const g=new THREE.Group();world.add(g);const core=ball(owner==='player'?.19:.16,owner==='player'?M.cyan:M.red,g,0,0,0,10);const trail=mesh(new THREE.SphereGeometry(.23,8,6),owner==='player'?M.violet:M.red,g,0,0,-.16,false);trail.scale.set(.7,.7,1.7);g.position.copy(from);projectiles.push({group:g,dir,speed:owner==='player'?20:10,life:2.2,owner,damage});return g;}
@@ -92,9 +136,9 @@ function hurtPlayer(amount){if(player.invuln>0||ended)return;player.hp=Math.max(
 function killEnemy(e){if(e.dead)return;e.dead=true;spawnBurst(e.pos.clone().add(v3(0,1,0)),e.type==='king'?M.violet:M.cyan,e.type==='king'?32:15);world.remove(e.group);player.kills++;player.souls++;gainXP(e.type==='king'?120:e.type==='brute'?35:22);if(random()<.7){drops.push({pos:e.pos.clone(),life:14});}if(e.type==='king')finish(true);}
 function damageEnemy(e,damage){if(e.dead)return;e.hp-=damage;spawnBurst(e.pos.clone().add(v3(0,1,0)),M.cyan,3);if(e.hp<=0)killEnemy(e);}
 function fireBolt(){if(player.attack>0||!player.alive)return;player.attack=.24;const from=player.pos.clone().add(v3(0,1.8,0));let to=aimPoint.clone();if(!mouseActive||to.distanceTo(player.pos)<1)to.copy(player.pos).add(player.aim.clone().multiplyScalar(22));to.y=1;makeProjectile(from,to,'player',28+player.level*2);player.aim.set(to.x-player.pos.x,0,to.z-player.pos.z).normalize();player.mesh.rotation.y=Math.atan2(player.aim.x,player.aim.z);player.staff.rotation.z=-.42;setTimeout(()=>{if(player.staff)player.staff.rotation.z=-.16;},100);}
-function summon(){if(player.mana<35){announce('NOT ENOUGH WRAITHFIRE');return;}if(player.servants.length>=3){announce('THREE BONE SERVANTS ALREADY ANSWER');return;}player.mana-=35;player.summon=8;createServant();spawnBurst(player.pos.clone().add(v3(0,.8,0)),M.bone,10);announce('A BONE SERVANT RISES');}
+function summon(){if(player.mana<35){announce('NOT ENOUGH WRAITHFIRE');return;}player.mana-=35;player.summon=8;createServant();spawnBurst(player.pos.clone().add(v3(0,.8,0)),M.bone,10);announce('A BONE SERVANT RISES');}
 function castNova(){if(player.mana<55){announce('NOT ENOUGH WRAITHFIRE');return;}if(player.nova>0)return;player.mana-=55;player.nova=7;player.novaFx=.8;spawnBurst(player.pos.clone().add(v3(0,1,0)),M.violet,28);for(const e of enemies)if(!e.dead&&e.pos.distanceTo(player.pos)<7.5)damageEnemy(e,65+player.level*4);for(const e of enemies)if(!e.dead&&e.type!=='king'&&e.pos.distanceTo(player.pos)<7.5)e.attack=1.2;announce('GRAVE NOVA');}
-function wraithStep(){if(player.dash>0)return;let d=v3((keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0),0,(keys.s||keys.arrowdown?1:0)-(keys.w||keys.arrowup?1:0));if(d.lengthSq()===0)d.copy(player.aim);d.normalize();player.dash=.35;player.dashDir=d;player.invuln=.42;spawnBurst(player.pos.clone().add(v3(0,.7,0)),M.violet,9);}
+function wraithStep(){if(player.dash>0)return;const side=(keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0),forward=(keys.w||keys.arrowup?1:0)-(keys.s||keys.arrowdown?1:0);const right=v3(-player.aim.z,0,player.aim.x);const d=right.multiplyScalar(side).addScaledVector(player.aim,forward);if(d.lengthSq()===0)d.copy(player.aim);d.normalize();player.dash=.35;player.dashDir=d;player.invuln=.42;spawnBurst(player.pos.clone().add(v3(0,.7,0)),M.violet,9);}
 function interact(){if(targetObelisk&&!targetObelisk.awakened){const o=targetObelisk;o.awakened=true;o.rune.material=M.cyan;o.ring.material=M.cyan;o.light.color.set('#65e7e5');o.light.intensity=2.4;spawnBurst(o.pos.clone().add(v3(0,2.4,0)),M.cyan,26);player.mana=Math.min(player.maxMana,player.mana+35);announce(`SOUL OBELISK ${o.index+1} AWAKENED`,3);updateQuest();for(let i=0;i<3;i++)spawnEnemyNear(o.pos.x,o.pos.z,i===2?'brute':'wretch');if(obelisks.every(x=>x.awakened)){document.querySelector('#quest-title').textContent='The Wraith King';document.querySelector('#quest-desc').textContent='Defeat the forgotten king beyond the old road';document.querySelector('#bottom-hint').innerHTML='<span class="hint-dot"></span> The Wraith King stirs beyond the ruined arch.';portal=createEnemy(-2,-68,'king');announce('THE WRAITH KING HAS AWAKENED',4);}}else if(targetObelisk?.awakened){announce('THIS SOUL IS ALREADY AT REST');}}
 function updateQuest(){const n=obelisks.filter(o=>o.awakened).length;document.querySelector('#quest-count').textContent=`${n} / 3 AWAKENED`;document.querySelector('#quest-progress').style.width=`${n/3*100}%`;if(n===3){document.querySelector('#quest-title').textContent='The Wraith King';document.querySelector('#quest-desc').textContent='Defeat the forgotten king beyond the old road';}}
 function finish(won){if(ended)return;ended=true;player.alive=false;const modal=document.querySelector('#end-modal');document.querySelector('#end-title').innerHTML=won?'DAWN<br><em>RETURNS</em>':'THE WILDS<br><em>CLAIM YOU</em>';document.querySelector('#end-copy').innerHTML=won?'The souls of Ashenmoor are free.<br>The old road is quiet at last.':'The dead close in, and your light fades.<br>Rise again and finish what you began.';document.querySelector('#end-stats').innerHTML=`<span>${player.level}<small>LEVEL</small></span><span>${player.kills}<small>DEAD SLAIN</small></span><span>${player.souls}<small>SOULS BOUND</small></span>`;modal.classList.remove('hidden');}
@@ -119,10 +163,10 @@ document.querySelector('#mobile-attack').addEventListener('pointerdown',e=>{e.pr
 document.querySelector('#start-btn').addEventListener('click',()=>{started=true;document.querySelector('#intro-modal').classList.add('hidden');document.querySelector('#bottom-hint').classList.add('show');announce('THE OLD ROAD WAITS. FOLLOW THE SOULS.',3);});document.querySelector('#help-btn').addEventListener('click',()=>document.querySelector('#help-modal').classList.remove('hidden'));document.querySelector('#close-help').addEventListener('click',()=>document.querySelector('#help-modal').classList.add('hidden'));document.querySelector('#resume-btn').addEventListener('click',()=>document.querySelector('#help-modal').classList.add('hidden'));document.querySelector('#restart-btn').addEventListener('click',()=>location.reload());document.querySelector('#sound-btn').addEventListener('click',e=>{audioOn=!audioOn;e.currentTarget.textContent=audioOn?'♫':'♩';announce(audioOn?'SOUND ON':'SOUND OFF',1.3);});
 function resize(){camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.6));}window.addEventListener('resize',resize);
 buildWorld();createHero();spawnEnemyNear(2,1);spawnEnemyNear(-5,-1);spawnEnemyNear(-17,-14,'brute');spawnEnemyNear(17,-28,'brute');
-const cameraGoal=new THREE.Vector3();camera.position.set(0,28,30);camera.lookAt(player.pos);let lastUI=0;
+const cameraGoal=new THREE.Vector3();camera.position.set(0,5,17.5);camera.lookAt(player.pos.clone().add(v3(0,1.25,0)));let lastUI=0;
 function tick(){requestAnimationFrame(tick);const dt=Math.min(clock.getDelta(),.045);time+=dt;if(!ended){player.attack=Math.max(0,player.attack-dt);player.summon=Math.max(0,player.summon-dt);player.nova=Math.max(0,player.nova-dt);player.invuln=Math.max(0,player.invuln-dt);player.dash=Math.max(0,player.dash-dt);player.novaFx=Math.max(0,player.novaFx-dt);player.mana=Math.min(player.maxMana,player.mana+6*dt);
- if(started&&document.querySelector('#help-modal').classList.contains('hidden')){let dx=(keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0)+stick.x,dz=(keys.s||keys.arrowdown?1:0)-(keys.w||keys.arrowup?1:0)+stick.y;const move=v3(dx,0,dz);if(move.lengthSq()>1)move.normalize();if(player.dash>0){player.pos.addScaledVector(player.dashDir,18*dt);}else player.pos.addScaledVector(move,5.2*dt);player.pos.x=clamp(player.pos.x,-66,66);player.pos.z=clamp(player.pos.z,-78,22);if(move.lengthSq()>.02&&!mouseActive){player.aim.copy(move).normalize();player.mesh.rotation.y=Math.atan2(player.aim.x,player.aim.z);}player.mesh.position.copy(player.pos);player.mesh.position.y=Math.sin(time*8)*.025*(move.lengthSq()>.02?1:0);player.aura.rotation.z=time*.55;updateEnemies(dt);updateProjectiles(dt);updateParticles(dt);updateDrops(dt);nearestTarget();if(toastTime>0){toastTime-=dt;if(toastTime<=0)document.querySelector('#toast').classList.remove('show');}}
- const target=player.pos.clone().add(v3(0,0,0));cameraGoal.set(player.pos.x,player.pos.y+28,player.pos.z+27);camera.position.lerp(cameraGoal,.075);camera.lookAt(target);if(time-lastUI>.12){updateUI();lastUI=time;}renderer.render(scene,camera);}}
+ if(started&&document.querySelector('#help-modal').classList.contains('hidden')){const side=(keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0)+stick.x,forward=(keys.w||keys.arrowup?1:0)-(keys.s||keys.arrowdown?1:0)-stick.y;const right=v3(-player.aim.z,0,player.aim.x);const move=right.multiplyScalar(side).addScaledVector(player.aim,forward);if(move.lengthSq()>1)move.normalize();if(player.dash>0){player.pos.addScaledVector(player.dashDir,18*dt);}else player.pos.addScaledVector(move,5.2*dt);player.pos.x=clamp(player.pos.x,-66,66);player.pos.z=clamp(player.pos.z,-78,22);if(move.lengthSq()>.02&&!mouseActive){player.aim.copy(move).normalize();player.mesh.rotation.y=Math.atan2(player.aim.x,player.aim.z);}player.mesh.position.copy(player.pos);player.mesh.position.y=Math.sin(time*8)*.025*(move.lengthSq()>.02?1:0);if(player.limbs){player.limbs.legs.forEach((limb,i)=>limb.pivot.rotation.x=Math.sin(time*10+i*Math.PI)*Math.min(.48,move.length()*.42));player.limbs.arms.forEach((limb,i)=>{if(i===0)limb.pivot.rotation.x=Math.sin(time*10+Math.PI)*Math.min(.22,move.length()*.18);});}player.aura.rotation.z=time*.55;updateEnemies(dt);updateProjectiles(dt);updateParticles(dt);updateDrops(dt);nearestTarget();if(toastTime>0){toastTime-=dt;if(toastTime<=0)document.querySelector('#toast').classList.remove('show');}}
+ const behind=player.aim.clone().setY(0).normalize();cameraGoal.copy(player.pos).addScaledVector(behind,-7.5);cameraGoal.y=player.pos.y+5;camera.position.lerp(cameraGoal,.12);camera.lookAt(player.pos.clone().add(v3(0,1.25,0)));if(time-lastUI>.12){updateUI();lastUI=time;}renderer.render(scene,camera);}}
 tick();
 
 
