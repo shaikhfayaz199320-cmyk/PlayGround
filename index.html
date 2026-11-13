@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#101510" />
+  <title>Gravebound — Rise of the Hollow King</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="icon" href="data:," />
+</head>
+<body>
+  <main id="game-shell">
+    <canvas id="game" aria-label="Gravebound action adventure game"></canvas>
+    <div class="vignette"></div>
+    <header class="topbar">
+      <div class="brand"><div class="brand-mark">✦</div><div><span class="eyebrow">THE ASHEN FRONTIER</span><strong>GRAVEBOUND</strong></div></div>
+      <div class="quest"><span class="quest-icon">✧</span><div><small>CURRENT OBJECTIVE</small><strong id="objective">Break the first wave</strong></div></div>
+      <div class="top-actions"><button id="mapBtn" class="icon-btn" title="Map (M)">⌖</button><button id="soundBtn" class="icon-btn" title="Sound">♫</button><button id="pauseBtn" class="icon-btn" title="Pause (Esc)">Ⅱ</button></div>
+    </header>
+    <section class="hud-left">
+      <div class="hero-card"><div class="avatar">☠</div><div class="hero-info"><span class="eyebrow">THE GRAVEKEEPER</span><strong>VESPER</strong><div class="level-line"><span id="levelText">LVL 01</span><div class="xp-track"><i id="xpBar"></i></div></div></div><div class="level-gem">✦</div></div>
+      <div class="vital"><div class="vital-label"><span>♥ &nbsp;VITALITY</span><b id="healthText">100 / 100</b></div><div class="bar"><i id="healthBar"></i></div></div>
+      <div class="vital essence"><div class="vital-label"><span>✧ &nbsp;SOUL ESSENCE</span><b id="essenceText">0</b></div><div class="bar"><i id="essenceBar"></i></div></div>
+    </section>
+    <section class="hud-right">
+      <div class="army-card"><div class="army-symbol">♜</div><div><span class="eyebrow">YOUR LEGION</span><strong><span id="armyCount">0</span> <small>SOULS</small></strong></div><span class="army-pulse"></span></div>
+      <div class="threat-card"><div class="threat-title"><span>THREAT LEVEL</span><b id="threatLevel">I</b></div><div id="threatPips" class="threat-pips"></div><small id="threatHint">The dead are restless</small></div>
+    </section>
+    <div class="wave-banner" id="waveBanner"><span class="wave-kicker">HOSTILES APPROACH</span><strong id="waveTitle">THE FIRST HUNT</strong><div class="wave-progress"><span id="waveProgress">0 / 0</span><div><i id="waveBar"></i></div></div></div>
+    <div class="toast" id="toast"></div>
+    <div class="controls-hint" id="controlsHint"><span class="keycap">W A S D</span><span>Move</span><i></i><span class="keycap">SPACE</span><span>Grave strike</span><i></i><span class="keycap">Q / E</span><span>Rotate</span></div>
+    <div class="zoom-controls"><button id="zoomOut" aria-label="Zoom out">−</button><span>ZOOM</span><button id="zoomIn" aria-label="Zoom in">+</button></div>
+    <div class="mobile-controls" id="mobileControls"><div class="stick-zone" id="stickZone"><div class="stick-base"><div id="stickKnob"></div></div><span>MOVE</span></div><div class="mobile-actions"><button id="summonBtn" class="action-btn summon-btn"><span>♜</span><small>RAISE</small></button><button id="attackBtn" class="action-btn attack-btn"><span>✦</span><small>STRIKE</small></button></div></div>
+    <div class="screen-cover" id="introScreen"><div class="intro-card"><div class="intro-emblem">☠</div><span class="eyebrow">A THIRD-PERSON DARK FANTASY ADVENTURE</span><h1>THE DEAD<br/><em>ANSWER.</em></h1><p>Every foe you fell joins your endless legion. The more souls you claim, the fiercer the frontier becomes.</p><div class="intro-stats"><div><b>∞</b><span>ENDLESS LEGION</span></div><div><b>↗</b><span>RISING THREAT</span></div><div><b>⌖</b><span>OPEN FRONTIER</span></div></div><button id="beginBtn" class="primary-btn">ENTER THE FRONTIER <span>→</span></button><div class="intro-note">WASD to move · Space to strike · Q / E to rotate camera</div></div><div class="intro-side-note">01 — THE CINDER WILDS</div></div>
+    <div class="pause-screen screen-cover hidden" id="pauseScreen"><div class="pause-card"><span class="eyebrow">THE FRONTIER WAITS</span><h2>PAUSED</h2><p>Take a breath, Gravekeeper.</p><button class="primary-btn" id="resumeBtn">RETURN TO BATTLE <span>→</span></button><div class="pause-controls">WASD move &nbsp;·&nbsp; Space strike &nbsp;·&nbsp; Wheel zoom</div></div></div>
+    <div class="gameover screen-cover hidden" id="gameoverScreen"><div class="pause-card"><span class="eyebrow">THE CYCLE CONTINUES</span><h2>CLAIMED BY<br/>THE WILDS</h2><p id="finalStats">Your legion remembers.</p><button class="primary-btn" id="retryBtn">RISE AGAIN <span>↻</span></button></div></div>
+    <div class="map-overlay hidden" id="mapOverlay"><div class="map-panel"><button class="close-map" id="closeMap">×</button><span class="eyebrow">CINDER WILDS · REGION MAP</span><h2>THE ASHEN FRONTIER</h2><canvas id="minimap" width="440" height="280"></canvas><p>Explore the wilds. Hostiles gather where the veil is thin.</p></div></div>
+    <div id="touchLook" aria-hidden="true"></div>
+  </main>
+  <script src="game.js"></script>
+</body>
+</html>
